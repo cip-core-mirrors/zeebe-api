@@ -1,9 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const busboy = require('connect-busboy');
 
 const app = express();
 
 app.use(bodyParser.json());
+app.use(busboy());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -11,7 +13,7 @@ app.use(bodyParser.urlencoded({
 async function init() {
     app.use(cors)
     app.use(logRequest)
-    app.use('/', createRouter())
+    app.use('/', require('./router'))
     app.use(handleError)
 
     return app
@@ -52,30 +54,6 @@ async function handleError(err, req, res, next) {
     }
 
     await res.json(response.data)
-}
-
-function createRouter() {
-    try {
-        require('./workers/github')
-        const publish = require('./publish')
-
-        const router = express.Router()
-        router.post('/publish', async function(req, res, next) {
-            const {
-                correlationKey,
-                name,
-                variables = {},
-                timeToLive = 10, // seconds
-            } = req.body
-
-            const response = await publish.publishMessage(correlationKey, name, variables, timeToLive)
-            await res.json(response)
-        })
-
-        return router
-    } catch (e) {
-        console.error(e)
-    }
 }
 
 module.exports = {
