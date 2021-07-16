@@ -2,6 +2,7 @@ const express = require('express')
 
 const publish = require('./zeebe/publish')
 const deploy = require('./zeebe/deploy')
+const instance = require('./zeebe/instance')
 
 //require('./zeebe/workers/github')
 
@@ -9,6 +10,7 @@ const router = express.Router()
 
 router.post('/publishMessage', publishMessage)
 router.post('/createProcess', deployProcess)
+router.post('/createProcessInstance', createProcessInstance)
 
 async function publishMessage(req, res, next) {
     const {
@@ -19,6 +21,17 @@ async function publishMessage(req, res, next) {
     } = req.body
 
     const response = await publish.publishMessage(correlationKey, name, variables, timeToLive)
+    await res.json(response)
+}
+
+async function createProcessInstance(req, res, next) {
+    const {
+        processId,
+        variables = {},
+        timeout, // seconds
+    } = req.body
+
+    const response = await instance.createProcessInstance(processId, variables, timeout)
     await res.json(response)
 }
 
